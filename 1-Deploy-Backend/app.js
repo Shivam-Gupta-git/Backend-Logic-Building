@@ -16,6 +16,10 @@ app.get('/about', (req, res) => {
   res.send('Welcome to About Page')
 })
 
+app.get('/login', (req, res) => {
+  res.send('Welcome to login Page')
+})
+
 app.listen(PORT, ()=>{
   console.log(`Surver running at http://localhost:${PORT}`)
 })
