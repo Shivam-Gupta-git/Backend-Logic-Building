@@ -22,6 +22,10 @@ const userSchema = mongoose.Schema({
     type: String,
     require: [true, 'FullName should be required']
   }, 
+  avatar: {
+    type: String,
+    require: true
+  },
   coverImage: {
     type: String
   },

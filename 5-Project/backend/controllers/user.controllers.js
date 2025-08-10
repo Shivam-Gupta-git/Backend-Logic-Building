@@ -2,6 +2,7 @@ import {check, validationResult} from 'express-validator'
 import bcrypt from 'bcrypt' 
 import jwt from 'jsonwebtoken'
 import { User } from '../model/user.model.js'
+import { uploadOnCloudinary } from '../config/cloudinary.config.js'
 
 
 const createToken = (id) => {
@@ -10,18 +11,43 @@ const createToken = (id) => {
 
 export const userRegistration = async (req, res) => {
   try {
-    const {userName, email, password, } = req.body
+    const {userName, fullName, email, password, } = req.body
 
-    const existingUser = await User.findOne({ email })
+    if(
+      [userName, fullName, email, password].some((fields) => fields?.trim() === "")
+    ){
+      return res.status(400).json({success: false, message: 'All fields are required'})
+    }
+
+    const existingUser = await User.findOne({ 
+      $or: [{ userName }, { email }]
+     })
     if(existingUser){
       return res.status(400).json({success: false, message: 'User allready exist'})
     }
 
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+    const coverImageLocalPath = req.files?.avatar[0]?.path
+
+    if(!avatarLocalPath){
+      return res.status(400).json({success: false, message: 'Avatar file is required'})
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if(!avatar){
+      return res.status(400).json({success: false, message: " can't upload Avatar file on cloudinary"})
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12)
     const newUser = new User({
-     userName,
+     userName: userName.toLowerCase(), 
+     fullName,
      email,
-     password: hashedPassword
+     password: hashedPassword,
+     avatar: avatar.url,
+     coverImage: coverImage?.url || ""
     })
 
     const savedUser = newUser.save()
