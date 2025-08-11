@@ -1,5 +1,5 @@
 import express from 'express'
-import { userLogin, userLogout, userRegistration } from '../controllers/user.controllers.js'
+import { refereshAccessToken, userLogin, userLogout, userRegistration } from '../controllers/user.controllers.js'
 import { upload } from '../middleware/multer.middleware.js'
 import { userAuth } from '../middleware/auth.middleware.js'
 
@@ -18,5 +18,6 @@ userRouter.post('/register',upload.fields([
 
 userRouter.post('/login', userLogin)
 userRouter.post('/logout',userAuth, userLogout)
+userRouter.post('/refreshToken', refereshAccessToken)
 
 export { userRouter }

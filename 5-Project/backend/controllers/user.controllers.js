@@ -2,6 +2,7 @@ import { check, validationResult } from "express-validator";
 import bcrypt from "bcrypt";
 import { User } from "../model/user.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
+import jwt from 'jsonwebtoken'
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -117,14 +118,14 @@ export const userLogin = async (req, res) => {
 
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV ,
+      secure: process.env.NODE_ENV,
       sameSite: "none"
     };
 
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refereshToken, options)
+      .cookie("refereshToken", refereshToken, options)
       .json({
         success: true,
         user: loggedInUser
@@ -136,7 +137,6 @@ export const userLogin = async (req, res) => {
   }
 };
 
-// Maybe Deleted
 export const userLogout = async (req, res) => {
   User.findByIdAndUpdate(
     req.registeredUser._id,
@@ -153,4 +153,42 @@ export const userLogout = async (req, res) => {
   }
   return res.status(200).json({success: true,  message: 'User logged uot succeddfully'})
 
-}
+};
+
+export const refereshAccessToken = async (req, res) => {
+ const incomingRefreshToken = await req.cookies.refereshToken || req.body.refereshToken
+ if(!incomingRefreshToken){
+  res.status(401).json({success: false, message: 'Unauthorized token'})
+ }
+
+ try {
+  const decoded_Token = jwt.verify(incomingRefreshToken, process.env.JWT_SECRET)
+  
+  const registeredUser = await User.findById(decoded_Token?._id)
+  if(!registeredUser){
+   res.status(401).json({success: false, message: "Invaled refresh token"})
+  }
+ 
+  if(incomingRefreshToken !== registeredUser?.refereshToken){
+   res.status(401).json({success: false, message: 'refresh token is expired/used'})
+  }
+ 
+  const options = {
+   httpOnly: true,
+   secure: true
+  }
+ 
+  const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(registeredUser._id)
+ 
+  return res
+  .status(200)
+  .cookie("accessToken", accessToken, options)
+  .cookie("refreshToken", newRefreshToken)
+  .json(({accessToken, refereshToken: newRefreshToken },
+   "access token refresh successfully"))
+   
+ } catch (error) {
+  res.status(401).json({success: false, message: 'erreo while in refereshAccessToken'})
+ }
+
+};
