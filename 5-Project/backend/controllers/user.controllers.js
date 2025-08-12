@@ -18,7 +18,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
   } catch (error) {
     console.log("Error while in access and referesh token", error)
   }
-}
+};
 
 export const userRegistration = async (req, res) => {
   try {
@@ -72,20 +72,20 @@ export const userRegistration = async (req, res) => {
         });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = new User({
       userName,
       fullName,
       email,
-      password: hashedPassword,
+      password,
       avatar: avatar.url,
       coverImage: coverImage?.url || "",
     });
 
-    const savedUser = newUser.save();
-    const token = createToken(savedUser._id);
+     newUser.save();
+    // const token = createToken(savedUser._id);
 
-    res.status(500).json({ success: true, token });
+    res.status(500).json({ success: true, message: "data will be successfully stored" });
   } catch (error) {
     console.log(error);
     res.status(400).json({ success: false, message: error.message });
@@ -95,7 +95,6 @@ export const userRegistration = async (req, res) => {
 export const userLogin = async (req, res) => {
   try {
     const { userName, email, password } = req.body;
-
     if (!password || !(email || userName)) {
       return res.status(400).json({ success: false, message: "Email/username and password are required" });
     }
@@ -103,11 +102,13 @@ export const userLogin = async (req, res) => {
     const registeredUser = await User.findOne({ 
       $or: [{ email }, { userName }]
     });
+    console.log(registeredUser)
     if (!registeredUser) { 
       return res.status(400).json({ success: false, message: "User does not exist" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, registeredUser.password);
+    const isPasswordValid = await registeredUser.isPasswordCorrect(password);
+
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
@@ -142,7 +143,7 @@ export const userLogout = async (req, res) => {
     req.registeredUser._id,
     {
       $set: {
-        refreshToken: undefined
+        refereshToken: 1
       },
       new: true
     }
@@ -151,7 +152,10 @@ export const userLogout = async (req, res) => {
     httpOnly: true,
     secure: true
   }
-  return res.status(200).json({success: true,  message: 'User logged uot succeddfully'})
+  return res.status(200)
+  .clearCookie("accessToken", options)
+  .clearCookie("refereshToken",  options)
+  .json({}, {success: true,  message: 'User logged uot succeddfully'})
 
 };
 
@@ -183,7 +187,7 @@ export const refereshAccessToken = async (req, res) => {
   return res
   .status(200)
   .cookie("accessToken", accessToken, options)
-  .cookie("refreshToken", newRefreshToken)
+  .cookie("refreshToken", newRefreshToken, options)
   .json(({accessToken, refereshToken: newRefreshToken },
    "access token refresh successfully"))
    
@@ -192,3 +196,94 @@ export const refereshAccessToken = async (req, res) => {
  }
 
 };
+
+export const changeCurrentPassword = async (req, res) => {
+ const { oldPassword, newPassword, confPassword } = req.body
+
+ if(!(newPassword === confPassword)){
+  res.status(401).json({status: false, message: "NewPassword or confPassword cant't matched"})
+ }
+
+ const registeredUser = await User.findById(req.registeredUser?._id)
+ 
+ const isPasswordCorrect = await registeredUser.isPasswordCorrect(oldPassword)
+
+ if(!isPasswordCorrect){
+  res.status(401).json({success: false, message: "Invaled old Password"})
+ }
+
+ registeredUser.password = newPassword;
+ await registeredUser.save()
+
+ return res.status(200).json({success: true, message: 'Password change successfully'})
+};
+
+export const getCurrentUser = async (req, res) => {
+  return res.status(200).json(req.registeredUser, "currrent user fetch successfully")
+};
+
+export const updateAccountDetails = async (req, res) => {
+  const {email, fullName} = req.body
+
+  if(!email || !fullName){
+    res.status(400).json({success: false, message: "All fields will be required"})
+  }
+
+  const registeredUser =  await User.findByIdAndUpdate(
+    req.registeredUser?._id, 
+    {
+      $set: {
+        email,
+        fullName
+      }
+    }, 
+    {new: true}).select("-password")
+
+    return res.status(200).json({success: true, registeredUser, message: "Account details updated"})
+};
+
+export const updateUserAvtar = async (req, res) => {
+  const avatarLocalPath =  req.file?.path
+  if(!avatarLocalPath){
+    res.status(401).json({success: false, message: "Avatar file can't be exist"})
+  }
+
+  const avatar =  await uploadOnCloudinary(avatarLocalPath)
+  if(!avatar.url){
+    res.status(401).json({success: false, message: "avatar file url can't be exist"})
+  }
+  const registeredUser = await User.findByIdAndUpdate(
+    req.registeredUser?._id, 
+    {
+      $set: {
+        avatar: avatar.url
+      }
+    }, {new: true}).select("-password")
+
+    return res.status(200).json({success: true, registeredUser, message:"Avatar file changed successfully"})
+}
+
+export const updateCoverImage = async (req, res) => {
+  const coverImageLocalPath = req.file?.path
+  if(!coverImageLocalPath){
+    res.status(401).json({success: false, message: "coverImage can't be exist"})
+  }
+
+ const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+ if(!coverImage.url){
+  res.status(401).json({success: false, message: "coverImage file url can't be exist"})
+ }
+
+ const registeredUser = await User.findByIdAndUpdate(
+  req.registeredUser?._id, 
+  {
+    $set:{
+      coverImage: coverImage.url
+    }
+  }, 
+  {new: true}).select("-password")
+
+  return res.status(200).json({success: true, registeredUser, message: "coverImage file changed successfully"})
+}
+
+
