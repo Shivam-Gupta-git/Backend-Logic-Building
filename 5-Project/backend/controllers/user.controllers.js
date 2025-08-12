@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { User } from "../model/user.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -95,12 +96,10 @@ export const userLogin = async (req, res) => {
   try {
     const { userName, email, password } = req.body;
     if (!password || !(email || userName)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Email/username and password are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email/username and password are required",
+      });
     }
 
     const registeredUser = await User.findOne({
@@ -219,12 +218,10 @@ export const changeCurrentPassword = async (req, res) => {
   const { oldPassword, newPassword, confPassword } = req.body;
 
   if (!(newPassword === confPassword)) {
-    res
-      .status(401)
-      .json({
-        status: false,
-        message: "NewPassword or confPassword cant't matched",
-      });
+    res.status(401).json({
+      status: false,
+      message: "NewPassword or confPassword cant't matched",
+    });
   }
 
   const registeredUser = await User.findById(req.registeredUser?._id);
@@ -269,13 +266,11 @@ export const updateAccountDetails = async (req, res) => {
     { new: true }
   ).select("-password");
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      registeredUser,
-      message: "Account details updated",
-    });
+  return res.status(200).json({
+    success: true,
+    registeredUser,
+    message: "Account details updated",
+  });
 };
 
 export const updateUserAvtar = async (req, res) => {
@@ -302,13 +297,11 @@ export const updateUserAvtar = async (req, res) => {
     { new: true }
   ).select("-password");
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      registeredUser,
-      message: "Avatar file changed successfully",
-    });
+  return res.status(200).json({
+    success: true,
+    registeredUser,
+    message: "Avatar file changed successfully",
+  });
 };
 
 export const updateCoverImage = async (req, res) => {
@@ -336,13 +329,11 @@ export const updateCoverImage = async (req, res) => {
     { new: true }
   ).select("-password");
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      registeredUser,
-      message: "coverImage file changed successfully",
-    });
+  return res.status(200).json({
+    success: true,
+    registeredUser,
+    message: "coverImage file changed successfully",
+  });
 };
 
 export const getUserChannelProfile = async (req, res) => {
@@ -407,11 +398,66 @@ export const getUserChannelProfile = async (req, res) => {
   if (!channel?.length) {
     res.status(401).json({ success: false, message: "channel doen't exist" });
   }
-  console.log(channel);
+  console.log("getUserChannelProfile", channel);
+  return res.status(200).json(channel[0], {
+    success: true,
+    message: "user chennel fetch successfully",
+  });
+};
+
+export const getWatchHistory = async (req, res) => {
+  const registeredUser = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Schema.Types.ObjectId(req.registeredUser._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    userName: 1,
+                    fullName: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+  if (!registeredUser) {
+    res
+      .status(401)
+      .json({ success: false, message: "watch history user does't exist" });
+  }
+  console.log("registerUserOnGetWatchHistory", registeredUser);
+
   return res
     .status(200)
-    .json(channel[0], {
+    .json(registeredUser[0].watchHistory, {
       success: true,
-      message: "user chennel fetch successfully",
+      message: "Watch history fetched successfully",
     });
 };
