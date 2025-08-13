@@ -12,6 +12,8 @@ const likeSchema = new mongoose.Schema({
     ref: 'Video',
     require: true
   },
+
+  // bsdkjewbdkjewb
   likeBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
