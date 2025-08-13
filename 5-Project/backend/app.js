@@ -10,6 +10,7 @@ const app = express()
 import { userRouter } from './routes/user.router.js'
 import connectDB from './config/mongodb.config.js'
 import connectCloudinary from './config/cloudinary.config.js'
+import { videoRouter } from './routes/video.router.js'
 
 dotenv.config()
 const PORT = process.env.PORT || 3000;
@@ -30,6 +31,7 @@ app.use(cookieParser())
 
 // Routes
 app.use('/api/user', userRouter)
+app.use('/api/user', videoRouter)
 
 
 app.get('/', (req, res) => {

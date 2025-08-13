@@ -70,7 +70,6 @@ export const userRegistration = async (req, res) => {
       });
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = new User({
       userName,
       fullName,
@@ -81,7 +80,6 @@ export const userRegistration = async (req, res) => {
     });
 
     newUser.save();
-    // const token = createToken(savedUser._id);
 
     res
       .status(500)
