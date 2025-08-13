@@ -13,7 +13,6 @@ const likeSchema = new mongoose.Schema({
     require: true
   },
 
-  // bsdkjewbdkjewb
   likeBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
