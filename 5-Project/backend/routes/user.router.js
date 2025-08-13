@@ -34,7 +34,7 @@ userRouter.post(
 
 userRouter.post("/login", userLogin);
 userRouter.post("/logout", userAuth, userLogout);
-userRouter.post("/refreshToken", refereshAccessToken);
+userRouter.post("/refreshAccessToken", refereshAccessToken);
 userRouter.post("/changePassword", userAuth, changeCurrentPassword);
 userRouter.get("/currentUser", userAuth, getCurrentUser);
 userRouter.patch("/updateAccount", userAuth, updateAccountDetails);

@@ -139,7 +139,7 @@ export const userLogin = async (req, res) => {
       .cookie("refereshToken", refereshToken, options)
       .json({
         success: true,
-        user: loggedInUser,
+        user: loggedInUser, accessToken, refereshToken
       });
   } catch (error) {
     console.log(error);
@@ -149,7 +149,7 @@ export const userLogin = async (req, res) => {
 
 export const userLogout = async (req, res) => {
   User.findByIdAndUpdate(req.registeredUser._id, {
-    $set: {
+    $unset: {
       refereshToken: 1,
     },
     new: true,
@@ -162,7 +162,11 @@ export const userLogout = async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refereshToken", options)
-    .json({}, { success: true, message: "User logged uot succeddfully" });
+    .json({ 
+      success: true, 
+      message: "User logged out succeddfully",
+      data: {} 
+    });
 };
 
 export const refereshAccessToken = async (req, res) => {
@@ -216,7 +220,7 @@ export const refereshAccessToken = async (req, res) => {
 
 export const changeCurrentPassword = async (req, res) => {
   const { oldPassword, newPassword, confPassword } = req.body;
-
+  console.log(oldPassword, newPassword, confPassword)
   if (!(newPassword === confPassword)) {
     res.status(401).json({
       status: false,
@@ -338,6 +342,7 @@ export const updateCoverImage = async (req, res) => {
 
 export const getUserChannelProfile = async (req, res) => {
   const { userName } = req.params;
+
   if (!userName?.trim()) {
     res.status(400).json({ success: false, message: "userName does't exist" });
   }
@@ -367,14 +372,14 @@ export const getUserChannelProfile = async (req, res) => {
     {
       $addFields: {
         subscribersCount: {
-          $size: "$subscriptions",
+          $size: "$subscribers",
         },
         channelSubscribedToCount: {
           $size: "$subscribedTo",
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [req.registeredUser?._id, "$subscribers.subscriber"] },
+            if: { $in: [ new mongoose.Types.ObjectId(req.registeredUser?._id), "$subscribers.subscriber" ] },
             then: true,
             else: false,
           },
@@ -406,58 +411,65 @@ export const getUserChannelProfile = async (req, res) => {
 };
 
 export const getWatchHistory = async (req, res) => {
-  const registeredUser = await User.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Schema.Types.ObjectId(req.registeredUser._id),
+  try {
+    const registeredUser = await User.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(req.registeredUser._id),
+        },
       },
-    },
-    {
-      $lookup: {
-        from: "videos",
-        localField: "watchHistory",
-        foreignField: "_id",
-        as: "watchHistory",
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "owner",
-              pipeline: [
-                {
-                  $project: {
-                    userName: 1,
-                    fullName: 1,
-                    avatar: 1,
+      {
+        $lookup: {
+          from: "videos",
+          localField: "watchHistory",
+          foreignField: "_id",
+          as: "watchHistory",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                  {
+                    $project: {
+                      userName: 1,
+                      fullName: 1,
+                      avatar: 1,
+                    },
                   },
-                },
-              ],
-            },
-          },
-          {
-            $addFields: {
-              owner: {
-                $first: "$owner",
+                ],
               },
             },
-          },
-        ],
+            {
+              $addFields: {
+                owner: { $first: "$owner" },
+              },
+            },
+          ],
+        },
       },
-    },
-  ]);
-  if (!registeredUser) {
-    res
-      .status(401)
-      .json({ success: false, message: "watch history user does't exist" });
-  }
-  console.log("registerUserOnGetWatchHistory", registeredUser);
+    ]);
 
-  return res
-    .status(200)
-    .json(registeredUser[0].watchHistory, {
+    if (!registeredUser.length) {
+      return res.status(404).json({
+        success: false,
+        message: "User does not exist or has no watch history",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Watch history fetched successfully",
+      data: registeredUser[0].watchHistory,
     });
+
+  } catch (error) {
+    console.error("Error fetching watch history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
 };
