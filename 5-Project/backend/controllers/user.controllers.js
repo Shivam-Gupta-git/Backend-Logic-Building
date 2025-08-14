@@ -4,6 +4,7 @@ import { User } from "../model/user.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import cloudinary from 'cloudinary'
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -277,10 +278,25 @@ export const updateAccountDetails = async (req, res) => {
 
 export const updateUserAvtar = async (req, res) => {
   const avatarLocalPath = req.file?.path;
+
   if (!avatarLocalPath) {
     res
       .status(401)
-      .json({ success: false, message: "Avatar file can't be exist" });
+      .json({ success: false, message: "Avatar file is required" });
+  }
+
+  const currentUser = await User.findById(req.registeredUser?.id)
+  if(!currentUser){
+    res.status(401).json({success: false, message: "user not found"})
+  }
+
+  if(currentUser.avatar){
+    try {
+      const publicId = currentUser.avatar.split('/').pop().split('.')[0]
+      await cloudinary.uploader.destroy(publicId)
+    } catch (error) {
+      console.warn("No previous avatar to delete or deletion failed:", error);
+    }
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -298,6 +314,10 @@ export const updateUserAvtar = async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+
+
+
 
   return res.status(200).json({
     success: true,
