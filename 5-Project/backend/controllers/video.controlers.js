@@ -84,48 +84,54 @@ export const getVideoById = async (req, res) => {
   }
 };
 
+
 export const updateVideoDetails = async (req, res) => {
   try {
     const { title, description } = req.body;
-    const videoLocalPath = req.file?.video[0]?.path;
-    const thumbnailLocalPath = req.file?.thumbnail[0]?.path
+    const { videoId } = req.params;
 
-    const { videoId } = req.params
-    if([title, description, videoLocalPath, thumbnailLocalPath].some((field) => {
-      field?.trim() === ""
-    })){
-      res.status(400).json({success: false, message: "all fields will be required"})
+    // Correct multer field names
+    const videoLocalPath = req.files?.videoFile?.[0]?.path;
+    const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
+
+    if (!videoId?.trim()) {
+      return res.status(400).json({ success: false, message: "videoId is required" });
     }
 
-    const videoFile = await uploadOnCloudinary(videoLocalPath)
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
-
-    if([videoFile?.url, thumbnail?.url].some((fieldPath) => {
-     fieldPath?.trim() === ""
-    })){
-     res.status(401).json({success: false, message: "videoFile and thumbnail can't be uploaded on cloudinary"})
+    if ([title, description].some(field => !field || field.trim() === "")) {
+      return res.status(400).json({ success: false, message: "title and description are required" });
     }
 
-    const videoDetails = await Video.findByIdAndUpdate(
-      videoId,{
-        $set: {
-          title,
-          description,
-          videoFile: videoFile.url,
-          thumbnail: thumbnail.url 
-        }
-      },
-      {
-        new: true
-      }
-    )
+    let videoFile, thumbnail;
+    if (videoLocalPath) videoFile = await uploadOnCloudinary(videoLocalPath);
+    if (thumbnailLocalPath) thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
-    res.status(200).json({success: true, data: videoDetails, message: "video details will be updated"})
+    const updateData = {
+      title,
+      description
+    };
+
+    if (videoFile?.url) updateData.videoFile = videoFile.url;
+    if (thumbnail?.url) updateData.thumbnail = thumbnail.url;
+
+    const updatedVideo = await Video.findByIdAndUpdate(
+      videoId,
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedVideo) {
+      return res.status(404).json({ success: false, message: "Video not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: updatedVideo,
+      message: "Video details updated successfully"
+    });
+
   } catch (error) {
     console.error("Error updating video:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error while updating video"
-    });
+    return res.status(500).json({ success: false, message: "Error while updating video" });
   }
 };
