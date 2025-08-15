@@ -1,6 +1,6 @@
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
 import { Video } from "../model/video.model.js";
-import cloudinary from 'cloudinary'
+import cloudinary from "cloudinary";
 
 export const uploadVideos = async (req, res) => {
   try {
@@ -47,7 +47,11 @@ export const uploadVideos = async (req, res) => {
 
     res
       .status(500)
-      .json({ success: true, message: "video will be successfully stored" });
+      .json({
+        success: true,
+        message: "video will be successfully stored",
+        data: videoFileDetails,
+      });
   } catch (error) {
     res
       .status(401)
@@ -57,28 +61,30 @@ export const uploadVideos = async (req, res) => {
 
 export const getAllVideos = async (req, res) => {
   try {
-    const videos = await Video.find()
-    res.status(200).json({success: true, data: videos})
+    const videos = await Video.find();
+    res.status(200).json({ success: true, data: videos });
   } catch (error) {
-    res.status(500).json({success: false, message: "Error Fetching videos"})
+    res.status(500).json({ success: false, message: "Error Fetching videos" });
   }
-}
+};
 
 export const getVideoById = async (req, res) => {
   try {
     const { videoId } = req.params;
 
-    if(!videoId?.trim()){
-      res.status(400).json({success: false, message: "video Id is required"})
+    if (!videoId?.trim()) {
+      res.status(400).json({ success: false, message: "video Id is required" });
     }
-  
-    const video = await Video.findById(videoId)
-    if(!video){
-      res.status(404).json({success: false, message: "video not found"})
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ success: false, message: "video not found" });
     }
-    res.status(200).json({success: true, data: video.videoFile})
+    res.status(200).json({ success: true, data: video.videoFile });
   } catch (error) {
-    res.status(500).json({success: false, message: "Error while fatching video"})
+    res
+      .status(500)
+      .json({ success: false, message: "Error while fatching video" });
   }
 };
 
@@ -87,30 +93,37 @@ export const updateVideoDetails = async (req, res) => {
     const { title, description } = req.body;
     const { videoId } = req.params;
 
-    // Correct multer field names
     const videoLocalPath = req.files?.videoFile?.[0]?.path;
     const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
     if (!videoId?.trim()) {
-      return res.status(400).json({ success: false, message: "videoId is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "videoId is required" });
     }
 
-    if ([title, description].some(field => !field || field.trim() === "")) {
-      return res.status(400).json({ success: false, message: "title and description are required" });
+    if ([title, description].some((field) => !field || field.trim() === "")) {
+      return res.status(400).json({
+        success: false,
+        message: "title and description are required",
+      });
     }
 
-    const existingVideo = await Video.findById(videoId)
-    if(!existingVideo){
-      return res.status(401).json({success: false, message: "Video id can't be exist"})
+    const existingVideo = await Video.findById(videoId);
+    if (!existingVideo) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Video id can't be exist" });
     }
 
     let videoFile, thumbnail;
     if (videoLocalPath) videoFile = await uploadOnCloudinary(videoLocalPath);
-    if (thumbnailLocalPath) thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    if (thumbnailLocalPath)
+      thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
     const updateData = {
       title,
-      description
+      description,
     };
 
     if (videoFile?.url) updateData.videoFile = videoFile.url;
@@ -123,18 +136,30 @@ export const updateVideoDetails = async (req, res) => {
     );
 
     if (!updatedVideo) {
-      return res.status(404).json({ success: false, message: "Video not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Video not found" });
     }
 
     try {
-      if(videoFile?.url && existingVideo.videoFile){
-       const publishedVideoId = existingVideo.videoFile.split('/').pop().split('.')[0]
-       await cloudinary.uploader.destroy(publishedVideoId, {resource_type: "videoFile"})
+      if (videoFile?.url && existingVideo.videoFile) {
+        const publishedVideoId = existingVideo.videoFile
+          .split("/")
+          .pop()
+          .split(".")[0];
+        await cloudinary.uploader.destroy(publishedVideoId, {
+          resource_type: "videoFile",
+        });
       }
 
-      if(thumbnail?.url && existingVideo.thumbnail){
-        const publishedThumbnail = existingVideo.thumbnail.split('/').pop().split('.')[0]
-        await cloudinary.uploader.destroy(publishedThumbnail, {resource_type: "thumbnail"})
+      if (thumbnail?.url && existingVideo.thumbnail) {
+        const publishedThumbnail = existingVideo.thumbnail
+          .split("/")
+          .pop()
+          .split(".")[0];
+        await cloudinary.uploader.destroy(publishedThumbnail, {
+          resource_type: "thumbnail",
+        });
       }
     } catch (error) {
       console.warn("No previous avatar to delete or deletion failed:", error);
@@ -143,44 +168,106 @@ export const updateVideoDetails = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: updatedVideo,
-      message: "Video details updated successfully"
+      message: "Video details updated successfully",
     });
-
   } catch (error) {
     console.error("Error updating video:", error);
-    return res.status(500).json({ success: false, message: "Error while updating video" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Error while updating video" });
   }
 };
 
 export const deleteVideos = async (req, res) => {
   try {
     const { videoId } = req.params;
-    if(!videoId?.trim()){
-      res.status(400).json({success: false, message: "video Id is required"})
-    }
-  
-   const existingVideo =  await Video.findById(videoId)
-   if(!existingVideo){
-    res.status(400).json({success: false, message: "video not found"})
-   }
-
-   try {
-    if(existingVideo.videoFile){
-      const publishedVideoId = existingVideo.videoFile.split('/').pop().split('.')[0]
-      await cloudinary.uploader.destroy(publishedVideoId, {resource_type: "videoFile"})
+    if (!videoId?.trim()) {
+      res.status(400).json({ success: false, message: "video Id is required" });
     }
 
-    if(existingVideo.thumbnail){
-      const publishedThumbnail = existingVideo.thumbnail.split('/').pop().split('.')[0]
-      await cloudinary.uploader.destroy(publishedThumbnail, {resource_type: "thumbnail"})
+    const existingVideo = await Video.findById(videoId);
+    if (!existingVideo) {
+      res.status(400).json({ success: false, message: "video not found" });
     }
-   } catch (error) {
-    res.status(500).json({success: false, message:"Error while in deleting video from cloudinary"})
-   }
 
-   await Video.findByIdAndDelete(videoId)
-   res.status(200).json({success: true, message: "video deleting successfully"})
+    try {
+      if (existingVideo.videoFile) {
+        const publishedVideoId = existingVideo.videoFile
+          .split("/")
+          .pop()
+          .split(".")[0];
+        await cloudinary.uploader.destroy(publishedVideoId, {
+          resource_type: "videoFile",
+        });
+      }
+
+      if (existingVideo.thumbnail) {
+        const publishedThumbnail = existingVideo.thumbnail
+          .split("/")
+          .pop()
+          .split(".")[0];
+        await cloudinary.uploader.destroy(publishedThumbnail, {
+          resource_type: "thumbnail",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error while in deleting video from cloudinary",
+      });
+    }
+
+    await Video.findByIdAndDelete(videoId);
+    res
+      .status(200)
+      .json({ success: true, message: "video deleting successfully" });
   } catch (error) {
-    res.status(500).json({success: false, message: "Error while in deleting video"})
+    res
+      .status(500)
+      .json({ success: false, message: "Error while in deleting video" });
   }
-}
+};
+
+export const togglePublishedStatus = async (req, res) => {
+  try {
+    const { isPublished } = req.body;
+    if (!isPublished?.trim()) {
+      res
+        .status(400)
+        .json({ success: false, message: "isPublished fields is required" });
+    }
+    const { videoId } = req.params;
+    if (!videoId) {
+      res
+        .status(400)
+        .json({ success: false, message: "video Id can't be find" });
+    }
+
+    const isPublishedLocalPath = await Video.findByIdAndUpdate(
+      videoId,
+      { isPublished },
+      { new: true }
+    );
+
+    if (!isPublishedLocalPath) {
+      res
+        .status(400)
+        .json({ success: false, message: "isPublished path can't be updated" });
+    }
+    await isPublishedLocalPath.save();
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "isPublished path update successfully",
+        data: isPublishedLocalPath,
+      });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error while in togglePublishedStatus",
+      });
+  }
+};
