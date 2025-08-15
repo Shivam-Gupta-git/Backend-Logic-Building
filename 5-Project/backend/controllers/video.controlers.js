@@ -153,6 +153,34 @@ export const updateVideoDetails = async (req, res) => {
 };
 
 export const deleteVideos = async (req, res) => {
-  const { videoId } = req.params;
-  console.log(videoId)
+  try {
+    const { videoId } = req.params;
+    if(!videoId?.trim()){
+      res.status(400).json({success: false, message: "video Id is required"})
+    }
+  
+   const existingVideo =  await Video.findById(videoId)
+   if(!existingVideo){
+    res.status(400).json({success: false, message: "video not found"})
+   }
+
+   try {
+    if(existingVideo.videoFile){
+      const publishedVideoId = existingVideo.videoFile.split('/').pop().split('.')[0]
+      await cloudinary.uploader.destroy(publishedVideoId, {resource_type: "videoFile"})
+    }
+
+    if(existingVideo.thumbnail){
+      const publishedThumbnail = existingVideo.thumbnail.split('/').pop().split('.')[0]
+      await cloudinary.uploader.destroy(publishedThumbnail, {resource_type: "thumbnail"})
+    }
+   } catch (error) {
+    res.status(500).json({success: false, message:"Error while in deleting video from cloudinary"})
+   }
+
+   await Video.findByIdAndDelete(videoId)
+   res.status(200).json({success: true, message: "video deleting successfully"})
+  } catch (error) {
+    res.status(500).json({success: false, message: "Error while in deleting video"})
+  }
 }
