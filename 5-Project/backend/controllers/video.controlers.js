@@ -23,48 +23,53 @@ export const uploadVideos = async (req, res) => {
     }
 
     if (!videosLocalPath) {
-      res
+      return res
         .status(400)
         .json({ success: false, message: "video file is required" });
     }
+
     const videoFile = await uploadOnCloudinary(videosLocalPath);
     const thumbnail = thumbnailLocalPath
       ? await uploadOnCloudinary(thumbnailLocalPath)
       : null;
 
     if (!videoFile) {
-      res
+      return res
         .status(500)
         .json({ success: false, message: "video can't upload on cloudinary" });
     }
+
     const videoFileDetails = new Video({
       title,
       description,
       videoFile: videoFile.url,
       thumbnail: thumbnail?.url || "",
+      owner: req.registeredUser?._id, // Add owner if you have user authentication
     });
+
     await videoFileDetails.save();
 
-    res
-      .status(500)
-      .json({
-        success: true,
-        message: "video will be successfully stored",
-        data: videoFileDetails,
-      });
+    return res.status(201).json({
+      success: true,
+      message: "video uploaded successfully",
+      data: videoFileDetails,
+    });
   } catch (error) {
-    res
-      .status(401)
-      .json({ success: false, message: "error while in uploaded videos" });
+    console.error("Error uploading video:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "error while uploading videos" });
   }
 };
 
 export const getAllVideos = async (req, res) => {
   try {
     const videos = await Video.find();
-    res.status(200).json({ success: true, data: videos });
+    return res.status(200).json({ success: true, data: videos });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error Fetching videos" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Error Fetching videos" });
   }
 };
 
@@ -73,18 +78,23 @@ export const getVideoById = async (req, res) => {
     const { videoId } = req.params;
 
     if (!videoId?.trim()) {
-      res.status(400).json({ success: false, message: "video Id is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "video Id is required" });
     }
 
     const video = await Video.findById(videoId);
     if (!video) {
-      res.status(404).json({ success: false, message: "video not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "video not found" });
     }
-    res.status(200).json({ success: true, data: video.videoFile });
+
+    return res.status(200).json({ success: true, data: video.videoFile });
   } catch (error) {
-    res
+    return res
       .status(500)
-      .json({ success: false, message: "Error while fatching video" });
+      .json({ success: false, message: "Error while fetching video" });
   }
 };
 
@@ -182,12 +192,16 @@ export const deleteVideos = async (req, res) => {
   try {
     const { videoId } = req.params;
     if (!videoId?.trim()) {
-      res.status(400).json({ success: false, message: "video Id is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "video Id is required" });
     }
 
     const existingVideo = await Video.findById(videoId);
     if (!existingVideo) {
-      res.status(400).json({ success: false, message: "video not found" });
+      return res
+        .status(400)
+        .json({ success: false, message: "video not found" });
     }
 
     try {
@@ -211,20 +225,18 @@ export const deleteVideos = async (req, res) => {
         });
       }
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Error while in deleting video from cloudinary",
-      });
+      console.warn("Error deleting from cloudinary:", error);
+      // Continue with deletion even if cloudinary cleanup fails
     }
 
     await Video.findByIdAndDelete(videoId);
-    res
+    return res
       .status(200)
-      .json({ success: true, message: "video deleting successfully" });
+      .json({ success: true, message: "video deleted successfully" });
   } catch (error) {
-    res
+    return res
       .status(500)
-      .json({ success: false, message: "Error while in deleting video" });
+      .json({ success: false, message: "Error while deleting video" });
   }
 };
 
@@ -232,42 +244,43 @@ export const togglePublishedStatus = async (req, res) => {
   try {
     const { isPublished } = req.body;
     if (!isPublished?.trim()) {
-      res
+      return res
         .status(400)
-        .json({ success: false, message: "isPublished fields is required" });
-    }
-    const { videoId } = req.params;
-    if (!videoId) {
-      res
-        .status(400)
-        .json({ success: false, message: "video Id can't be find" });
+        .json({ success: false, message: "isPublished field is required" });
     }
 
-    const isPublishedLocalPath = await Video.findByIdAndUpdate(
+    const { videoId } = req.params;
+    if (!videoId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "video Id is required" });
+    }
+
+    const updatedVideo = await Video.findByIdAndUpdate(
       videoId,
       { isPublished },
       { new: true }
     );
 
-    if (!isPublishedLocalPath) {
-      res
+    if (!updatedVideo) {
+      return res
         .status(400)
-        .json({ success: false, message: "isPublished path can't be updated" });
+        .json({
+          success: false,
+          message: "Video not found or could not be updated",
+        });
     }
-    await isPublishedLocalPath.save();
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "isPublished path update successfully",
-        data: isPublishedLocalPath,
-      });
+
+    return res.status(200).json({
+      success: true,
+      message: "Published status updated successfully",
+      data: updatedVideo,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error while in togglePublishedStatus",
-      });
+    console.error("Error toggling published status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error while updating published status",
+    });
   }
 };

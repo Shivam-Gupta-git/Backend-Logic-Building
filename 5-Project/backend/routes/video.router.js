@@ -13,7 +13,7 @@ import { upload } from "../middleware/multer.middleware.js";
 const videoRouter = express.Router();
 
 videoRouter.post(
-  "/:uploadVideo",
+  "/uploadVideo",
   userAuth,
   upload.fields([
     {
