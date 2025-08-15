@@ -1,8 +1,6 @@
-// import { User } from "../model/user.model"
-
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
-import { User } from "../model/user.model.js";
 import { Video } from "../model/video.model.js";
+import cloudinary from 'cloudinary'
 
 export const uploadVideos = async (req, res) => {
   try {
@@ -84,7 +82,6 @@ export const getVideoById = async (req, res) => {
   }
 };
 
-
 export const updateVideoDetails = async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -100,6 +97,11 @@ export const updateVideoDetails = async (req, res) => {
 
     if ([title, description].some(field => !field || field.trim() === "")) {
       return res.status(400).json({ success: false, message: "title and description are required" });
+    }
+
+    const existingVideo = await Video.findById(videoId)
+    if(!existingVideo){
+      return res.status(401).json({success: false, message: "Video id can't be exist"})
     }
 
     let videoFile, thumbnail;
@@ -124,6 +126,20 @@ export const updateVideoDetails = async (req, res) => {
       return res.status(404).json({ success: false, message: "Video not found" });
     }
 
+    try {
+      if(videoFile?.url && existingVideo.videoFile){
+       const publishedVideoId = existingVideo.videoFile.split('/').pop().split('.')[0]
+       await cloudinary.uploader.destroy(publishedVideoId, {resource_type: "videoFile"})
+      }
+
+      if(thumbnail?.url && existingVideo.thumbnail){
+        const publishedThumbnail = existingVideo.thumbnail.split('/').pop().split('.')[0]
+        await cloudinary.uploader.destroy(publishedThumbnail, {resource_type: "thumbnail"})
+      }
+    } catch (error) {
+      console.warn("No previous avatar to delete or deletion failed:", error);
+    }
+
     return res.status(200).json({
       success: true,
       data: updatedVideo,
@@ -135,3 +151,8 @@ export const updateVideoDetails = async (req, res) => {
     return res.status(500).json({ success: false, message: "Error while updating video" });
   }
 };
+
+export const deleteVideos = async (req, res) => {
+  const { videoId } = req.params;
+  console.log(videoId)
+}
