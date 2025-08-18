@@ -164,4 +164,8 @@ export const deleteComment = async (req, res) => {
   } catch (error) {
     res.status(500).json({success: false, message: "Error while in deleting Comment"})
   }
+};
+
+export const editComment = async (req, res) => {
+  
 }
