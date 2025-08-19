@@ -80,10 +80,32 @@ try {
       return res.status(400).json({success: false, message: "Tweed not updated"})
     }
   
-    return res.status(200).json({success: true, message: "Tweed is updated"})
+    return res.status(200).json({success: true, message: "Tweed is updated", data: updateTweet})
 } catch (error) {
   return res.status(500).json({success: false, message: "while error in updated tweet"})
 }
+};
+
+export const deleteTweet = async (req, res) => {
+  try {
+    const { tweetId } = req.params
+    if(!tweetId?.trim()){
+      return res.status(400).json({success: false, message: "tweet Id is required"})
+    }
+  
+    const existingTweetId = await Tweet.findById(tweetId);
+    if(!existingTweetId){
+      return res.status(400).json({success: false, message: "tweet Id can't be exist"})
+    }
+  
+    await Tweet.findByIdAndDelete(tweetId)
+    return res.status(200).json({success: true, message: "tweet deleting succesfully"})
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Error while in delete tweet"})
+  }
+
 }
+
+
 
 
