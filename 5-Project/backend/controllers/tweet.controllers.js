@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import { Tweet } from "../model/tweet.model.js";
+import { User } from "../model/user.model.js";
 
 export const createTweet = async (req, res) => {
   try {
@@ -27,3 +29,61 @@ export const createTweet = async (req, res) => {
     console.error("Error creating tweet:", error);
   }
 };
+
+export const getUserTweet = async (req, res) => {
+  try {
+    const { owner } = req.params;
+
+    if(!owner?.trim()){
+      return res.status(400).json({success: false, message: "Owner id is required"})
+    }
+
+    const existingUser = await User.findById(owner)
+    if(!existingUser){
+      return res.status(400).json({success: false, message: "Invaled owner Id"})
+    }
+    
+    const tweets = await Tweet.find({ owner })
+
+    if(!tweets.length){
+      return res.status(400).json({success: false, message: "No tweets found for user"})
+    }
+
+    return res.status(200).json({success: true, message: "tweet fetching successfully", data: tweets})
+  } catch (error) {
+    return res.status(500).json({success: false, message: "while Error in get user tweets"})
+  }
+};
+
+export const updateTweet = async (req, res) => {
+try {
+    const { tweetId } = req.params;
+    const { content } = req.body;
+  
+    if(!tweetId?.trim()){
+      return res.status(400).json({success: false, message: "Tweet Id is required"})
+    }
+  
+    if(!content?.trim()){
+      return res.status(400).json({success: false, message: "content is required"})
+    }
+  
+    const existingTweetId = await Tweet.findById(tweetId);
+    if(!existingTweetId){
+      return res.status(400).json({success: false, message: "Tweed id not found"})
+    }
+  
+    const updateTweet = await Tweet.findByIdAndUpdate(existingTweetId, {
+      content,
+    })
+    if(!updateTweet){
+      return res.status(400).json({success: false, message: "Tweed not updated"})
+    }
+  
+    return res.status(200).json({success: true, message: "Tweed is updated"})
+} catch (error) {
+  return res.status(500).json({success: false, message: "while error in updated tweet"})
+}
+}
+
+
