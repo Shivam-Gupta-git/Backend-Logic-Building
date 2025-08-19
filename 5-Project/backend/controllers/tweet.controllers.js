@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Tweet } from "../model/tweet.model.js";
 import { User } from "../model/user.model.js";
 

@@ -13,6 +13,7 @@ import { userRouter } from './routes/user.router.js'
 import { videoRouter } from './routes/video.router.js'
 import { commentRouter } from './routes/comment.router.js'
 import { tweetRouter } from './routes/tweet.router.js'
+import { playlistRouter } from './routes/playlist.router.js'
 
 dotenv.config()
 const PORT = process.env.PORT || 3000;
@@ -36,6 +37,7 @@ app.use('/api/user', userRouter)
 app.use('/api/user', videoRouter)
 app.use('/api/user', commentRouter)
 app.use('/api/user', tweetRouter)
+app.use('/api/user/', playlistRouter)
 
 
 app.get('/', (req, res) => {

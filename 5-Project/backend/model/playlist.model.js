@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 const playlistSchema = new mongoose.Schema({
   name: {
     type: String,
-    require: true
+    required: true
   },
   description: {
     type: String
@@ -12,13 +12,13 @@ const playlistSchema = new mongoose.Schema({
     {
       type: Schema.Types.ObjectId,
       ref: 'Video',
-      require: true
+      required: true
     }
   ],
   owner: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    require: true
+    required: true
   }
 }, {timestamps: true})
 
