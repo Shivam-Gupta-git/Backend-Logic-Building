@@ -27,8 +27,11 @@ videoRouter.post(
   ]),
   uploadVideos
 );
-videoRouter.get("/", getAllVideos);
-videoRouter.get("/:videoId", userAuth, getVideoById);
+
+// Put specific routes first, then generic parameterized routes
+videoRouter.get("/videos", getAllVideos);
+videoRouter.get("/videos/:videoId", userAuth, getVideoById);
+
 videoRouter.put(
   "/updateVideoDetails/:videoId",
   userAuth,

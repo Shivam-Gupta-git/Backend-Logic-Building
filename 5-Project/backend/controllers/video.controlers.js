@@ -76,6 +76,7 @@ export const getAllVideos = async (req, res) => {
 export const getVideoById = async (req, res) => {
   try {
     const { videoId } = req.params;
+    console.log("Fetching video with ID:", videoId); // Debug log
 
     if (!videoId?.trim()) {
       return res
@@ -83,15 +84,28 @@ export const getVideoById = async (req, res) => {
         .json({ success: false, message: "video Id is required" });
     }
 
+    // Validate MongoDB ObjectId format
+    if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid video ID format" });
+    }
+
     const video = await Video.findById(videoId);
     if (!video) {
       return res
         .status(404)
-        .json({ success: false, message: "video not found" });
+        .json({ success: false, message: "Video not found" });
     }
 
-    return res.status(200).json({ success: true, data: video.videoFile });
+    console.log("Video found:", video.title); // Debug log
+    return res.status(200).json({
+      success: true,
+      data: video.videoFile,
+      message: "Video fetched successfully",
+    });
   } catch (error) {
+    console.error("Error in getVideoById:", error);
     return res
       .status(500)
       .json({ success: false, message: "Error while fetching video" });
@@ -263,12 +277,10 @@ export const togglePublishedStatus = async (req, res) => {
     );
 
     if (!updatedVideo) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Video not found or could not be updated",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Video not found or could not be updated",
+      });
     }
 
     return res.status(200).json({
