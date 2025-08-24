@@ -33,3 +33,20 @@ export const getChannelState = async (req, res) => {
     res.status(500).json({success: false, message: error.message})
   }
 }
+
+export const getChannelVideos = async (req, res) => {
+ try {
+  const UserId = req.registeredUser._id;
+  const getallVideos = await Video.find({ owner: UserId}).sort({ createdAt: -1}).populate("owner").lean()
+
+  if(!getallVideos || getallVideos.length === 0){
+    res.status(400).json({success: false, message: "Video not found"})
+  }
+
+  res.status(200).json({success: true, data: getallVideos, totalVideo: getallVideos.length})
+
+ } catch (error) {
+  console.error("Error while in getChannelVideos", error)
+  res.status(500).json({success: false, message: error.message})
+ }
+}
