@@ -224,7 +224,7 @@ function Header() {
             onClick={toggleUserBox}
           ></div>
           {openUserBox === true ? (
-            <div className="h-[250px] w-[200px] border border-gray-200 bg-white absolute top-11 right-[-40px] rounded-2xl">
+            <div className="h-[250px] w-[250px] border border-gray-200 bg-white absolute top-11 right-[-40px] rounded-2xl">
               <div className="h-[100px] w-full border-b-1 border-gray-300 flex  justify-between">
                 <div className="h-10 w-10 border border-gray-200 rounded-full bg-gray-200 mt-2 ml-1"></div>
                 <div className="h-full w-[75%] p-2">
