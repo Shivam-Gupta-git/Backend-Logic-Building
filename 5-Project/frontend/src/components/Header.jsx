@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { CiSearch } from "react-icons/ci";
 import { HiMiniBars3 } from "react-icons/hi2";
@@ -18,11 +18,11 @@ import { MdOutlineSubscriptions } from "react-icons/md";
 import { FaAngleRight } from "react-icons/fa6";
 import { ChannelContext } from "../context/ChannelContext";
 
-function Header() {
+function Header({ isLoginPage }) {
+  const { openSidebox, toggleSideBox, closeSideBox, navigate } =
+    useContext(ChannelContext);
   const [openAddContentBox, setOpenAddContentBox] = useState(false);
   const [openUserBox, setOpenUserBox] = useState(false);
-  const { openSidebox, toggleSideBox, closeSideBox } =
-    useContext(ChannelContext);
 
   const toggleAddContentBox = () => {
     setOpenAddContentBox((pre) => {
@@ -236,13 +236,15 @@ function Header() {
                 </div>
               </div>
               <div className="mt-2">
-                <a
-                  href="#"
-                  className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2"
+                {/* Login section */}
+                <div
+                  onClick={() => navigate("/Login")}
+                  className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2 cursor-pointer"
                 >
                   <CiLogin className="text-2xl" />
+                  {isLoginPage === true ? setOpenUserBox(false) : null}
                   <p>Login</p>
-                </a>
+                </div>
                 <a
                   href="#"
                   className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2"
