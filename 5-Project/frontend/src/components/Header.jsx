@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { CiSearch } from "react-icons/ci";
 import { HiMiniBars3 } from "react-icons/hi2";
@@ -19,10 +19,20 @@ import { FaAngleRight } from "react-icons/fa6";
 import { ChannelContext } from "../context/ChannelContext";
 
 function Header({ isLoginPage }) {
-  const { openSidebox, toggleSideBox, closeSideBox, navigate } =
-    useContext(ChannelContext);
+  const {
+    openSidebox,
+    toggleSideBox,
+    closeSideBox,
+    navigate,
+    token,
+    setToken,
+    userData
+  } = useContext(ChannelContext);
   const [openAddContentBox, setOpenAddContentBox] = useState(false);
   const [openUserBox, setOpenUserBox] = useState(false);
+
+
+  console.log(userData);
 
   const toggleAddContentBox = () => {
     setOpenAddContentBox((pre) => {
@@ -37,6 +47,17 @@ function Header({ isLoginPage }) {
       if (newState) setOpenAddContentBox(false);
       return newState;
     });
+  };
+
+  const logoutUser = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    navigate("/");
+  };
+
+  const handleLoginClick = () => {
+    setOpenUserBox(false);
+    navigate("/Login");
   };
 
   const sideBoxItems1 = (
@@ -226,10 +247,20 @@ function Header({ isLoginPage }) {
           {openUserBox === true ? (
             <div className="h-[250px] w-[250px] border border-gray-200 bg-white absolute top-11 right-[-40px] rounded-2xl">
               <div className="h-[100px] w-full border-b-1 border-gray-300 flex  justify-between">
-                <div className="h-10 w-10 border border-gray-200 rounded-full bg-gray-200 mt-2 ml-1"></div>
+                <div className="h-10 w-10 border border-gray-200 rounded-full bg-gray-200 mt-2 ml-1 overflow-hidden">
+                  {userData?.avatar ? (
+                    <img
+                      src={userData.avatar}
+                      alt="User Avatar"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 rounded-full"></div>
+                  )}
+                </div>
                 <div className="h-full w-[75%] p-2">
-                  <p>Shivam Kumar</p>
-                  <p>shivamgypta123</p>
+                  <p>{userData?.fullName || "User Not Exist"}</p>
+                  <p>{userData?.userName || ""}</p>
                   <a href="#" className="text-blue-600 text-sm">
                     View your channel
                   </a>
@@ -237,14 +268,25 @@ function Header({ isLoginPage }) {
               </div>
               <div className="mt-2">
                 {/* Login section */}
-                <div
-                  onClick={() => navigate("/Login")}
-                  className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2 cursor-pointer"
-                >
-                  <CiLogin className="text-2xl" />
-                  {isLoginPage === true ? setOpenUserBox(false) : null}
-                  <p>Login</p>
-                </div>
+                {!token ? (
+                  <div
+                    onClick={handleLoginClick}
+                    className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2 cursor-pointer"
+                  >
+                    <CiLogin className="text-2xl" />
+                    {isLoginPage === true ? setOpenUserBox(false) : null}
+                    <p>Login</p>
+                  </div>
+                ) : (
+                  <div
+                    onClick={logoutUser}
+                    className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2 cursor-pointer"
+                  >
+                    <CiLogin className="text-2xl" />
+                    <p>Logout</p>
+                  </div>
+                )}
+
                 <a
                   href="#"
                   className="flex flex-row items-center gap-2 text-[15px] hover:bg-gray-200 p-2"

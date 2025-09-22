@@ -1,53 +1,62 @@
 // External Module
-import express from 'express'
-import dotenv from 'dotenv'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-const app = express()
+const app = express();
 
 // Local Module
-import connectDB from './config/mongodb.config.js'
-import connectCloudinary from './config/cloudinary.config.js'
-import { userRouter } from './routes/user.router.js'
-import { videoRouter } from './routes/video.router.js'
-import { commentRouter } from './routes/comment.router.js'
-import { tweetRouter } from './routes/tweet.router.js'
-import { playlistRouter } from './routes/playlist.router.js'
-import { likeRouter } from './routes/like.router.js'
-import { dashboard } from './routes/dashboard.router.js'
+import connectDB from "./config/mongodb.config.js";
+import connectCloudinary from "./config/cloudinary.config.js";
+import { userRouter } from "./routes/user.router.js";
+import { videoRouter } from "./routes/video.router.js";
+import { commentRouter } from "./routes/comment.router.js";
+import { tweetRouter } from "./routes/tweet.router.js";
+import { playlistRouter } from "./routes/playlist.router.js";
+import { likeRouter } from "./routes/like.router.js";
+import { dashboard } from "./routes/dashboard.router.js";
 
-dotenv.config()
+dotenv.config();
 const PORT = process.env.PORT || 3000;
 connectDB({
-  path: './.env'
-})
-connectCloudinary()
+  path: "./.env",
+});
+connectCloudinary();
 
 // Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN,
-  credentials: true
-}))
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-app.use(cookieParser())
-
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Routes
-app.use('/api/user', userRouter)
-app.use('/api/user', videoRouter)
-app.use('/api/user', commentRouter)
-app.use('/api/user', tweetRouter)
-app.use('/api/user', playlistRouter)
-app.use('/api/user', likeRouter)
-app.use('/api/user', dashboard)
+app.use("/api/user", userRouter);
+app.use("/api/user", videoRouter);
+app.use("/api/user", commentRouter);
+app.use("/api/user", tweetRouter);
+app.use("/api/user", playlistRouter);
+app.use("/api/user", likeRouter);
+app.use("/api/user", dashboard);
 
-
-app.get('/', (req, res) => {
-  res.send('Server Start')
+app.get("/", (req, res) => {
+  res.send("Server Start");
 });
 
-app.listen(PORT, ()=> {
-  console.log(`Surver running at http://localhost:${PORT}`)
-})
+// Test endpoint for debugging
+app.get("/api/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend is working!",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});

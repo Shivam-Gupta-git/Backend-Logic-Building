@@ -4,7 +4,7 @@ import { User } from "../model/user.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.config.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import cloudinary from 'cloudinary'
+import cloudinary from "cloudinary";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -27,7 +27,7 @@ export const userRegistration = async (req, res) => {
 
     if (
       [userName, fullName, email, password].some(
-        (fields) => fields?.trim() === ""
+        (fields) => !fields || fields?.trim() === ""
       )
     ) {
       return res
@@ -56,6 +56,7 @@ export const userRegistration = async (req, res) => {
     }
 
     if (!avatarLocalPath) {
+      console.log("Avatar file missing - req.files:", req.files);
       return res
         .status(400)
         .json({ success: false, message: "Avatar file is required" });
@@ -80,14 +81,25 @@ export const userRegistration = async (req, res) => {
       coverImage: coverImage?.url || "",
     });
 
-    newUser.save();
+    await newUser.save();
 
-    res
-      .status(500)
-      .json({ success: true, message: "data will be successfully stored" });
+    const { accessToken, refereshToken } =
+      await generateAccessAndRefereshTokens(newUser._id);
+
+    const createdUser = await User.findById(newUser._id).select(
+      "-password -refereshToken"
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: createdUser,
+      accessToken,
+      refereshToken,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ success: false, message: error.message });
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -138,7 +150,9 @@ export const userLogin = async (req, res) => {
       .cookie("refereshToken", refereshToken, options)
       .json({
         success: true,
-        user: loggedInUser, accessToken, refereshToken
+        user: loggedInUser,
+        accessToken,
+        refereshToken,
       });
   } catch (error) {
     console.log(error);
@@ -161,10 +175,10 @@ export const userLogout = async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refereshToken", options)
-    .json({ 
-      success: true, 
+    .json({
+      success: true,
       message: "User logged out succeddfully",
-      data: {} 
+      data: {},
     });
 };
 
@@ -219,7 +233,7 @@ export const refereshAccessToken = async (req, res) => {
 
 export const changeCurrentPassword = async (req, res) => {
   const { oldPassword, newPassword, confPassword } = req.body;
-  console.log(oldPassword, newPassword, confPassword)
+  console.log(oldPassword, newPassword, confPassword);
   if (!(newPassword === confPassword)) {
     res.status(401).json({
       status: false,
@@ -244,9 +258,28 @@ export const changeCurrentPassword = async (req, res) => {
 };
 
 export const getCurrentUser = async (req, res) => {
-  return res
-    .status(200)
-    .json(req.registeredUser, "currrent user fetch successfully");
+  try {
+    console.log("getCurrentUser - req.registeredUser:", req.registeredUser);
+
+    if (!req.registeredUser) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Current user fetched successfully",
+      user: req.registeredUser,
+    });
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 export const updateAccountDetails = async (req, res) => {
@@ -285,15 +318,15 @@ export const updateUserAvtar = async (req, res) => {
       .json({ success: false, message: "Avatar file is required" });
   }
 
-  const currentUser = await User.findById(req.registeredUser?.id)
-  if(!currentUser){
-    res.status(401).json({success: false, message: "user not found"})
+  const currentUser = await User.findById(req.registeredUser?.id);
+  if (!currentUser) {
+    res.status(401).json({ success: false, message: "user not found" });
   }
 
-  if(currentUser.avatar){
+  if (currentUser.avatar) {
     try {
-      const publicId = currentUser.avatar.split('/').pop().split('.')[0]
-      await cloudinary.uploader.destroy(publicId)
+      const publicId = currentUser.avatar.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
     } catch (error) {
       console.warn("No previous avatar to delete or deletion failed:", error);
     }
@@ -314,10 +347,6 @@ export const updateUserAvtar = async (req, res) => {
     },
     { new: true }
   ).select("-password");
-
-
-
-
 
   return res.status(200).json({
     success: true,
@@ -397,7 +426,12 @@ export const getUserChannelProfile = async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [ new mongoose.Types.ObjectId(req.registeredUser?._id), "$subscribers.subscriber" ] },
+            if: {
+              $in: [
+                new mongoose.Types.ObjectId(req.registeredUser?._id),
+                "$subscribers.subscriber",
+              ],
+            },
             then: true,
             else: false,
           },
@@ -482,7 +516,6 @@ export const getWatchHistory = async (req, res) => {
       message: "Watch history fetched successfully",
       data: registeredUser[0].watchHistory,
     });
-
   } catch (error) {
     console.error("Error fetching watch history:", error);
     return res.status(500).json({

@@ -3,11 +3,17 @@ import fs from "fs";
 
 const connectCloudinary = () => {
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
+    cloud_name:
+      process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET_KEY,
+    api_secret:
+      process.env.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_SECRET_KEY,
   });
-}
+  console.log(
+    "Cloudinary configured with cloud_name:",
+    process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_NAME
+  );
+};
 
 const uploadOnCloudinary = async (localFilePath) => {
   try {
@@ -15,7 +21,7 @@ const uploadOnCloudinary = async (localFilePath) => {
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
-    fs.unlinkSync(localFilePath)
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
     console.error("Cloudinary upload error:", error.message);
@@ -25,4 +31,4 @@ const uploadOnCloudinary = async (localFilePath) => {
 };
 
 export { uploadOnCloudinary };
-export default connectCloudinary
+export default connectCloudinary;

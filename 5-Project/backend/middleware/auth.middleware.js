@@ -1,24 +1,40 @@
-import { User } from '../model/user.model.js'
-import jwt from 'jsonwebtoken' 
+import { User } from "../model/user.model.js";
+import jwt from "jsonwebtoken";
 
 export const userAuth = async (req, res, next) => {
   try {
-   
-  const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", " ")
-  if(!token){
-    res.status(401).json({success: false, message: 'Unauthorized request'})
-  }
+    console.log("Auth middleware - checking token...");
 
-  const decoded_Token = jwt.verify(token, process.env.JWT_SECRET)
-  const registeredUser = await User.findById(decoded_Token?._id).select("-password -refereshToken")
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
+    console.log("Token found:", token ? "Yes" : "No");
 
-  if(!registeredUser){
-    res.status(401).json({success: false, message: 'user token not exist'})
-  }
-  req.registeredUser = registeredUser
-  next()
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized request" });
+    }
+
+    const decoded_Token = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Token decoded successfully for user:", decoded_Token._id);
+
+    const registeredUser = await User.findById(decoded_Token?._id).select(
+      "-password -refereshToken"
+    );
+    console.log("User found:", registeredUser ? "Yes" : "No");
+
+    if (!registeredUser) {
+      return res
+        .status(401)
+        .json({ success: false, message: "User token not exist" });
+    }
+
+    req.registeredUser = registeredUser;
+    console.log("User set in req.registeredUser:", req.registeredUser.userName);
+    next();
   } catch (error) {
-    console.log(error)
-    res.json({success: false, message: error.message})
+    console.error("Auth middleware error:", error);
+    return res.status(401).json({ success: false, message: error.message });
   }
-}
+};
