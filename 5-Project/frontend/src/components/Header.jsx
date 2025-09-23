@@ -243,7 +243,10 @@ function Header({ isLoginPage }) {
           <div
             className="h-10 w-10 bg-gray-200 rounded-full"
             onClick={toggleUserBox}
-          ></div>
+          >
+            {userData?.avatar ?  <img src={userData.avatar} alt="" className="rounded-full"/> : null}
+           
+          </div>
           {openUserBox === true ? (
             <div className="h-[250px] w-[250px] border border-gray-200 bg-white absolute top-11 right-[-40px] rounded-2xl">
               <div className="h-[100px] w-full border-b-1 border-gray-300 flex  justify-between">
