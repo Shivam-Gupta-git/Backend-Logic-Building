@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, Links, NavLink } from "react-router-dom";
 import { CiSearch } from "react-icons/ci";
 import { HiMiniBars3 } from "react-icons/hi2";
 import { CiCirclePlus } from "react-icons/ci";
@@ -32,7 +32,7 @@ function Header({ isLoginPage }) {
   const [openUserBox, setOpenUserBox] = useState(false);
 
 
-  console.log(userData);
+  // console.log(userData);
 
   const toggleAddContentBox = () => {
     setOpenAddContentBox((pre) => {
@@ -59,6 +59,11 @@ function Header({ isLoginPage }) {
     setOpenUserBox(false);
     navigate("/Login");
   };
+
+  const handelUploadVideoClick = () => {
+    setOpenUserBox(false)
+    navigate('/UploadVideos')
+  }
 
   const sideBoxItems1 = (
     <>
@@ -213,13 +218,14 @@ function Header({ isLoginPage }) {
         <div className="relative">
           <div
             className="h-9 w-30 border border-gray-200 bg-gray-100 rounded-full flex flex-row items-center justify-center gap-1 cursor-pointer"
-            onClick={toggleAddContentBox}
+            onClick={token ? toggleAddContentBox : handleLoginClick}
           >
             <CiCirclePlus className="text-2xl" />
             <p>Create</p>
             {openAddContentBox === true ? (
               <div className="h-[150px] w-[200px] flex flex-col bg-white absolute top-11 rounded-2xl border border-gray-200 pt-3 gap-2">
-                <div className="flex flex-row items-center text-sm font-light gap-2 p-2 hover:bg-gray-200">
+                
+                <div className="flex flex-row items-center text-sm font-light gap-2 p-2 hover:bg-gray-200" onClick={handelUploadVideoClick}>
                   <IoAddOutline className="text-2xl" />
                   <p>Upload Video</p>
                 </div>

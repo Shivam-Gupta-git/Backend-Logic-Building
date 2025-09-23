@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ChannelContext } from "../context/ChannelContext";
 import axios from "axios";
+import { IoCloudUploadOutline } from "react-icons/io5"
 
 function Login() {
   const { navigate, backendURl, token, setToken } = useContext(ChannelContext);
@@ -84,7 +85,7 @@ function Login() {
   }, [token]);
 
   return (
-    <div className="fixed inset-0 h-[100vh] w-[100%] bg-transparent z-50 flex items-center justify-center">
+    <div className="h-[100%] w-[100%] bg-transparent z-50 flex items-center justify-center">
       <div className="w-[50%] bg-white rounded-lg shadow-lg border p-8">
         <h2 className="text-2xl font-bold mb-6 text-center">
           {currentState === "Login" ? "Login Form" : "Sign Up Form"}
@@ -177,25 +178,39 @@ function Login() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
+              <div className="flex flex-col items-center">
+              <label className="block text-sm font-medium text-gray-700">
                   Upload Avatar
                 </label>
+                <div className="h-[80px] w-[80px] border flex items-center justify-center mt-1 rounded-full overflow-hidden border-gray-200 shadow-sm">
+                      {!avatar ? (
+                        <IoCloudUploadOutline className="text-4xl"></IoCloudUploadOutline>
+                      ) : (
+                        <img src={URL.createObjectURL(avatar)} alt={``}  className="h-full w-full object-cover"/>
+                      )}
+                </div>
                 <input
                   type="file"
                   onChange={(e) => setAvatar(e.target.files[0])}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                 />
               </div>
 
-              <div>
+              <div className="flex flex-col items-center">
                 <label className="block text-sm font-medium text-gray-700">
                   Upload Cover Image
                 </label>
+                <div className="h-[100px] w-[70%] border flex items-center justify-center mt-1 rounded-xl overflow-hidden border-gray-200 shadow-sm">
+                 {!coverImage ? (
+                  <IoCloudUploadOutline className="text-4xl"></IoCloudUploadOutline>
+                 ) : (
+                  <img src={URL.createObjectURL(coverImage)} alt="" />
+                 )}
+                </div>
                 <input
                   type="file"
                   onChange={(e) => setCoverImage(e.target.files[0])}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mt-2"
                 />
               </div>
             </>

@@ -10,6 +10,7 @@ import LikedVideos from "./pages/LikedVideos";
 import Subscriptions from "./pages/Subscriptions";
 import UserProfile from "./pages/UserProfile";
 import Login from "./pages/Login";
+import UploadVideos from "./pages/UploadVideos";
 import { useContext } from "react";
 import { ChannelContext } from "./context/ChannelContext";
 
@@ -17,10 +18,11 @@ function App() {
   const { openSidebox } = useContext(ChannelContext);
   const location = useLocation();
   const isLoginPage = location.pathname === "/Login";
+  const isVideoUploas = location.pathname === "/UploadVideos"
 
   return (
     <>
-      <div className={isLoginPage ? "blur-sm" : ""}>
+      <div className={isLoginPage || isVideoUploas ? "blur-sm" : ""}>
         <Header isLoginPage={isLoginPage}></Header>
         <div className={`${openSidebox ? "ml-[20%]" : "ml-[5%]"} p-4`}>
           <Routes>
@@ -36,6 +38,9 @@ function App() {
         </div>
       </div>
       {isLoginPage && <Login />}
+      {isVideoUploas && <UploadVideos/>}
+      
+      
     </>
   );
 }
