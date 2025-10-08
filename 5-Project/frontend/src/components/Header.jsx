@@ -238,14 +238,14 @@ function Header({ isLoginPage }) {
           </div>
         </div>
         {/* Notification */}
-        <div className="hover:bg-gray-200 p-2 rounded-full transform transition-transform duration-700 relative">
+        <div className="hover:bg-gray-200 p-2 rounded-full transform transition-transform duration-700 relative cursor-pointer">
           <GoBell className="text-2xl" />
           <div className="h-4 w-6 bg-red-600 rounded-full absolute top-1 left-4.5 flex items-center justify-center">
             <p className="text-white text-sm">5+</p>
           </div>
         </div>
         {/* User Interface */}
-        <div className="relative">
+        <div className="relative cursor-pointer">
           <div
             className="h-10 w-10 bg-gray-200 rounded-full"
             onClick={toggleUserBox}
@@ -256,7 +256,7 @@ function Header({ isLoginPage }) {
           {openUserBox === true ? (
             <div className="h-[250px] w-[250px] border border-gray-200 bg-white absolute top-11 right-[-40px] rounded-2xl">
               <div className="h-[100px] w-full border-b-1 border-gray-300 flex  justify-between">
-                <div className="h-10 w-10 border border-gray-200 rounded-full bg-gray-200 mt-2 ml-1 overflow-hidden">
+                <div className="h-10 w-10 border border-gray-200 rounded-full bg-gray-200 mt-2 ml-1 overflow-hidden ">
                   {userData?.avatar ? (
                     <img
                       src={userData.avatar}
