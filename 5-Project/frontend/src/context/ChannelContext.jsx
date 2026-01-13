@@ -8,10 +8,11 @@ const ChannelContextProvider = (props) => {
   const [openSidebox, setSideBox] = useState(false);
   const [token, setToken] = useState("");
   const [userData, setUserData] = useState(null);
+  const [video, setVideo] = useState([])
   const backendURl =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-  console.log("Token:", token);
-  console.log("Backend URL:", backendURl);
+  // console.log("Token:", token);
+  // console.log("Backend URL:", backendURl);
 
   const toggleSideBox = () => setSideBox((prev) => !prev);
   const closeSideBox = () => setSideBox(false);
@@ -48,8 +49,21 @@ const ChannelContextProvider = (props) => {
     }
   };
 
+  const fetchVideoListData = async () => {
+    try {
+      const response = await axios.get(`${backendURl}/api/user/videos`)
+      if(response.data.success){
+        setVideo(response.data.videos)
+      }
+    } catch (error) {
+      
+    }
+  }
+
+  
   useEffect(() => {
     fetchUserData();
+    fetchVideoListData()
   }, [token]);
 
   const value = {
