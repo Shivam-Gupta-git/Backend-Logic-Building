@@ -26,10 +26,12 @@ function Header({ isLoginPage }) {
     navigate,
     token,
     setToken,
-    userData
+    userData,
+    backendURl
   } = useContext(ChannelContext);
   const [openAddContentBox, setOpenAddContentBox] = useState(false);
   const [openUserBox, setOpenUserBox] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   // console.log(userData);
@@ -63,6 +65,24 @@ function Header({ isLoginPage }) {
   const handelUploadVideoClick = () => {
     setOpenUserBox(false)
     navigate('/UploadVideos')
+  }
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  }
+
+  const handleSearchInputChange = (e) => {
+    setSearchQuery(e.target.value);
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
   }
 
   const sideBoxItems1 = (
@@ -204,14 +224,22 @@ function Header({ isLoginPage }) {
       </div>
       {/* Search Input */}
       <div className="h-full w-[50%]  flex flex-row items-center justify-center">
-        <input
-          type="text"
-          placeholder="Search"
-          className="w-[70%] h-9 border border-gray-300 outline-0 pl-2 rounded-l-3xl"
-        />
-        <button className="h-9 w-20 border border-gray-300 rounded-r-3xl bg-gray-100 flex items-center justify-center">
-          <CiSearch className="text-2xl" />
-        </button>
+        <form onSubmit={handleSearch} className="flex flex-row items-center w-full justify-center">
+          <input
+            type="text"
+            placeholder="Search videos..."
+            value={searchQuery}
+            onChange={handleSearchInputChange}
+            onKeyPress={handleKeyPress}
+            className="w-[70%] h-9 border border-gray-300 outline-0 pl-4 pr-2 rounded-l-3xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button 
+            type="submit"
+            className="h-9 w-20 border border-gray-300 rounded-r-3xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <CiSearch className="text-2xl" />
+          </button>
+        </form>
       </div>
       {/* create content and user section */}
       <div className="h-full w-[25%]  flex flex-row items-center justify-center gap-5 relative">
@@ -229,9 +257,15 @@ function Header({ isLoginPage }) {
                   <IoAddOutline className="text-2xl" />
                   <p>Upload Video</p>
                 </div>
-                <div className="flex flex-row items-center text-sm font-light gap-2 p-2 hover:bg-gray-200">
+                <div 
+                  className="flex flex-row items-center text-sm font-light gap-2 p-2 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => {
+                    setOpenAddContentBox(false)
+                    navigate('/Tweets')
+                  }}
+                >
                   <IoCreateOutline className="text-2xl" />
-                  <p>Cerate Post</p>
+                  <p>Create Post</p>
                 </div>
               </div>
             ) : null}

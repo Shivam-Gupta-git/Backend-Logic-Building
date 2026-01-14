@@ -11,6 +11,11 @@ import Subscriptions from "./pages/Subscriptions";
 import UserProfile from "./pages/UserProfile";
 import Login from "./pages/Login";
 import UploadVideos from "./pages/UploadVideos";
+import VideoPlayer from "./pages/VideoPlayer";
+import SearchResults from "./pages/SearchResults";
+import ChannelProfile from "./pages/ChannelProfile";
+import Tweets from "./pages/Tweets";
+import PlaylistDetail from "./pages/PlaylistDetail";
 import { useContext } from "react";
 import { ChannelContext } from "./context/ChannelContext";
 
@@ -34,6 +39,11 @@ function App() {
             <Route path="/YourVideos" element={<YourVideos />}></Route>
             <Route path="/YourChannel" element={<YourChannel />}></Route>
             <Route path="/LikedVideos" element={<LikedVideos />}></Route>
+            <Route path="/video/:videoId" element={<VideoPlayer />}></Route>
+            <Route path="/search" element={<SearchResults />}></Route>
+            <Route path="/channel/:userName" element={<ChannelProfile />}></Route>
+            <Route path="/Tweets" element={<Tweets />}></Route>
+            <Route path="/playlist/:playlistId" element={<PlaylistDetail />}></Route>
           </Routes>
         </div>
       </div>

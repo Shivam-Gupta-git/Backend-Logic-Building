@@ -53,11 +53,15 @@ const ChannelContextProvider = (props) => {
     try {
       const response = await axios.get(`${backendURl}/api/user/videos`)
       if(response.data.success){
-        setVideo(response.data.videos)
+        setVideo(response.data.data || [])
       }
     } catch (error) {
-      
+      console.error("Failed to fetch videos:", error);
     }
+  }
+
+  const refreshVideos = () => {
+    fetchVideoListData();
   }
 
   
@@ -75,6 +79,8 @@ const ChannelContextProvider = (props) => {
     token,
     setToken,
     userData,
+    video,
+    refreshVideos,
   };
 
   return (
