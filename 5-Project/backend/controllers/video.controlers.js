@@ -12,15 +12,8 @@ export const uploadVideos = async (req, res) => {
         .json({ success: false, message: "all fields are required" });
     }
 
-    const videosLocalPath = req.files?.videoFile[0]?.path;
-    let thumbnailLocalPath;
-    if (
-      req.files &&
-      Array.isArray(req.files.thumbnail) &&
-      req.files.thumbnail.length > 0
-    ) {
-      thumbnailLocalPath = req.files.thumbnail[0]?.path;
-    }
+    const videosLocalPath = req.files?.videoFile?.[0]?.path;
+    const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
     if (!videosLocalPath) {
       return res
@@ -28,23 +21,30 @@ export const uploadVideos = async (req, res) => {
         .json({ success: false, message: "video file is required" });
     }
 
-    const videoFile = await uploadOnCloudinary(videosLocalPath);
-    const thumbnail = thumbnailLocalPath
-      ? await uploadOnCloudinary(thumbnailLocalPath)
-      : null;
-
-    if (!videoFile) {
+    if (!thumbnailLocalPath) {
       return res
-        .status(500)
-        .json({ success: false, message: "video can't upload on cloudinary" });
+        .status(400)
+        .json({ success: false, message: "thumbnail file is required" });
+    }
+
+    const videoFile = await uploadOnCloudinary(videosLocalPath);
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+    if (!videoFile || !thumbnail) {
+      return res.status(500).json({
+        success: false,
+        message: "video or thumbnail can't upload on cloudinary",
+      });
     }
 
     const videoFileDetails = new Video({
       title,
       description,
-      videoFile: videoFile.url,
-      thumbnail: thumbnail?.url || "",
+      videoFile: videoFile.secure_url,
+      thumbnail: thumbnail.secure_url,
       owner: req.registeredUser?._id, // Add owner if you have user authentication
+      // Make newly uploaded videos visible on Home by default
+      isPublished: true,
     });
 
     await videoFileDetails.save();
@@ -257,10 +257,12 @@ export const deleteVideos = async (req, res) => {
 export const togglePublishedStatus = async (req, res) => {
   try {
     const { isPublished } = req.body;
-    if (!isPublished?.trim()) {
-      return res
-        .status(400)
-        .json({ success: false, message: "isPublished field is required" });
+    // Accept proper boolean values from frontend
+    if (typeof isPublished !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isPublished field must be a boolean",
+      });
     }
 
     const { videoId } = req.params;

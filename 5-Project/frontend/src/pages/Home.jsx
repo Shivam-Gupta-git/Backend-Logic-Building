@@ -1,48 +1,50 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { ChannelContext } from '../context/ChannelContext'
-import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { FaPlay, FaEye, FaHeart } from 'react-icons/fa'
+import React, { useContext, useEffect, useState } from "react";
+import { ChannelContext } from "../context/ChannelContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaPlay, FaEye, FaHeart } from "react-icons/fa";
 
 function Home() {
-  const { token, backendURl, video, refreshVideos } = useContext(ChannelContext)
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
+  const { token, backendURl, video, refreshVideos } =
+    useContext(ChannelContext);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     if (refreshVideos) {
-      refreshVideos()
+      refreshVideos();
     }
-    const timer = setTimeout(() => setLoading(false), 500)
-    return () => clearTimeout(timer)
-  }, [refreshVideos])
+    setLoading(false);
+  }, [refreshVideos]);
 
   const handleVideoClick = (videoId) => {
-    if (token) {
-      navigate(`/video/${videoId}`)
-    } else {
-      navigate('/Login')
-    }
-  }
+    navigate(`/video/${videoId}`);
+  };
+
+  
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="w-full min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Trending Videos</h1>
-        
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">
+          Trending Videos
+        </h1>
+
         {video && Array.isArray(video) && video.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {video
-              .filter(v => v && (v.isPublished !== false))
+              .filter((v) => v && v.isPublished !== false)
               .map((item) => (
+             
                 <div
                   key={item._id}
                   onClick={() => handleVideoClick(item._id)}
@@ -55,6 +57,14 @@ function Home() {
                         alt={item.title}
                         className="w-full h-full object-cover"
                       />
+                    ) : item.videoFile ? (
+                      // Fallback: show video preview if thumbnail missing
+                      <video
+                        src={item.videoFile}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-800">
                         <FaPlay className="text-white text-4xl" />
@@ -65,7 +75,8 @@ function Home() {
                     </div>
                     {item.duration > 0 && (
                       <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                        {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                        {Math.floor(item.duration / 60)}:
+                        {(item.duration % 60).toString().padStart(2, "0")}
                       </div>
                     )}
                   </div>
@@ -95,7 +106,7 @@ function Home() {
             <p className="text-gray-500 text-lg">No videos available</p>
             {token && (
               <button
-                onClick={() => navigate('/UploadVideos')}
+                onClick={() => navigate("/UploadVideos")}
                 className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Upload Your First Video
@@ -105,7 +116,7 @@ function Home() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default Home
+export default Home;

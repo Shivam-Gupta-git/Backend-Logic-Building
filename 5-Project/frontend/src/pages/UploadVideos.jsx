@@ -46,7 +46,7 @@ function UploadVideos() {
       console.log("FormData entries:");
       for (let pair of formData.entries()) {
         console.log(
-          pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
+          pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1]),
         );
       }
 
@@ -58,7 +58,7 @@ function UploadVideos() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -153,7 +153,7 @@ function UploadVideos() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mt-2">
-              Thumblain
+              Thumbnail (required)
             </label>
             <input
               type="file"
@@ -162,6 +162,16 @@ function UploadVideos() {
               ref={thumbnailRef}
               className="w-full mt-2 p-2 border border-gray-300 rounded shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
+            {thumbnail && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500">Thumbnail preview:</p>
+                <img
+                  src={URL.createObjectURL(thumbnail)}
+                  alt="Thumbnail preview"
+                  className="mt-1 h-32 w-full object-cover rounded"
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mt-2">

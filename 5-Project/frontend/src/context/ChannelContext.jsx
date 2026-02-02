@@ -8,7 +8,7 @@ const ChannelContextProvider = (props) => {
   const [openSidebox, setSideBox] = useState(false);
   const [token, setToken] = useState("");
   const [userData, setUserData] = useState(null);
-  const [video, setVideo] = useState([])
+  const [video, setVideo] = useState([]);
   const backendURl =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
   // console.log("Token:", token);
@@ -51,23 +51,26 @@ const ChannelContextProvider = (props) => {
 
   const fetchVideoListData = async () => {
     try {
-      const response = await axios.get(`${backendURl}/api/user/videos`)
-      if(response.data.success){
-        setVideo(response.data.data || [])
+      const response = await axios.get(`${backendURl}/api/user/videos`);
+      if (response.data.success) {
+        setVideo(response.data.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch videos:", error);
     }
-  }
+  };
 
   const refreshVideos = () => {
     fetchVideoListData();
-  }
+  };
 
-  
+  // Fetch videos immediately on app load (does not require auth)
+  useEffect(() => {
+    fetchVideoListData();
+  }, []);
+
   useEffect(() => {
     fetchUserData();
-    fetchVideoListData()
   }, [token]);
 
   const value = {

@@ -18,6 +18,7 @@ import { likeRouter } from "./routes/like.router.js";
 import { dashboard } from "./routes/dashboard.router.js";
 
 dotenv.config();
+// Keep backend aligned with frontend VITE_BACKEND_URL (http://localhost:3000)
 const PORT = process.env.PORT || 3000;
 connectDB({
   path: "./.env",
@@ -27,7 +28,7 @@ connectCloudinary();
 // Middleware
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "a",
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
     credentials: true,
   })
 );
