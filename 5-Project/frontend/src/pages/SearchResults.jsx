@@ -1,67 +1,78 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { ChannelContext } from '../context/ChannelContext'
-import axios from 'axios'
-import { FaPlay, FaEye, FaHeart, FaSearch } from 'react-icons/fa'
+import React, { useContext, useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { ChannelContext } from "../context/ChannelContext";
+import axios from "axios";
+import { FaPlay, FaEye, FaHeart, FaSearch } from "react-icons/fa";
+import { API_BASE } from "../lib/api.js";
 
 function SearchResults() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const { backendURl, token, video, refreshVideos } = useContext(ChannelContext)
-  const [searchResults, setSearchResults] = useState([])
-  const [loading, setLoading] = useState(true)
-  const query = searchParams.get('q') || ''
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { token } = useContext(ChannelContext);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [allVideos, setAllVideos] = useState([]);
+  const query = searchParams.get("q") || "";
 
   useEffect(() => {
-    if (refreshVideos) {
-      refreshVideos()
-    }
-  }, [refreshVideos])
+    let cancelled = false;
+    const fetchVideos = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/user/videos`, {
+          timeout: 15000,
+        });
+        if (
+          !cancelled &&
+          response.data.success &&
+          Array.isArray(response.data.data)
+        ) {
+          setAllVideos(response.data.data);
+        }
+      } catch (_err) {
+        if (!cancelled) setAllVideos([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    setLoading(true);
+    fetchVideos();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
-    if (query && video && Array.isArray(video)) {
-      performSearch(query)
-    } else {
-      setLoading(false)
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
     }
-  }, [query, video])
-
-  const performSearch = (searchQuery) => {
-    if (!searchQuery.trim()) {
-      setSearchResults([])
-      setLoading(false)
-      return
-    }
-
-    const lowerQuery = searchQuery.toLowerCase().trim()
-    const filtered = video.filter((v) => {
-      if (!v) return false
-      const title = (v.title || '').toLowerCase()
-      const description = (v.description || '').toLowerCase()
+    const lowerQuery = query.toLowerCase().trim();
+    const filtered = allVideos.filter((v) => {
+      if (!v) return false;
+      const title = (v.title || "").toLowerCase();
+      const description = (v.description || "").toLowerCase();
       return (
-        title.includes(lowerQuery) ||
-        description.includes(lowerQuery)
-      ) && (v.isPublished !== false)
-    })
-
-    setSearchResults(filtered)
-    setLoading(false)
-  }
+        (title.includes(lowerQuery) || description.includes(lowerQuery)) &&
+        v.isPublished !== false
+      );
+    });
+    setSearchResults(filtered);
+  }, [query, allVideos]);
 
   const handleVideoClick = (videoId) => {
     if (token) {
-      navigate(`/video/${videoId}`)
+      navigate(`/video/${videoId}`);
     } else {
-      navigate('/Login')
+      navigate("/Login");
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -73,7 +84,8 @@ function SearchResults() {
           </h1>
           {query && (
             <p className="text-gray-600">
-              Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{query}"
+              Found {searchResults.length} result
+              {searchResults.length !== 1 ? "s" : ""} for "{query}"
             </p>
           )}
         </div>
@@ -104,7 +116,8 @@ function SearchResults() {
                     </div>
                     {item.duration > 0 && (
                       <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                        {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                        {Math.floor(item.duration / 60)}:
+                        {(item.duration % 60).toString().padStart(2, "0")}
                       </div>
                     )}
                   </div>
@@ -137,7 +150,7 @@ function SearchResults() {
                 Try searching with different keywords
               </p>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Browse All Videos
@@ -155,8 +168,7 @@ function SearchResults() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default SearchResults
-
+export default SearchResults;

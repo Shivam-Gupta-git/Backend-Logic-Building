@@ -64,7 +64,12 @@ export const uploadVideos = async (req, res) => {
 
 export const getAllVideos = async (req, res) => {
   try {
-    const videos = await Video.find();
+    // Explicitly include thumbnail and videoFile so they are always in the response
+    const videos = await Video.find()
+      .select(
+        "_id title description thumbnail videoFile views duration isPublished createdAt owner"
+      )
+      .lean();
     return res.status(200).json({ success: true, data: videos });
   } catch (error) {
     return res

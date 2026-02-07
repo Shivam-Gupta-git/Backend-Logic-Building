@@ -1,6 +1,7 @@
-import { createContext, useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../lib/api.js";
 
 export const ChannelContext = createContext();
 
@@ -9,10 +10,7 @@ const ChannelContextProvider = (props) => {
   const [token, setToken] = useState("");
   const [userData, setUserData] = useState(null);
   const [video, setVideo] = useState([]);
-  const backendURl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-  // console.log("Token:", token);
-  // console.log("Backend URL:", backendURl);
+  const backendURl = API_BASE;
 
   const toggleSideBox = () => setSideBox((prev) => !prev);
   const closeSideBox = () => setSideBox(false);
@@ -24,50 +22,32 @@ const ChannelContextProvider = (props) => {
     }
   }, []);
 
-  // Fetch user data when token changes
   const fetchUserData = async () => {
     if (!token) {
-      console.log("No token, setting userData to null");
       setUserData(null);
       return;
     }
     try {
       const response = await axios.get(`${backendURl}/api/user/currentUser`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (response.data.success) {
-        setUserData(response.data.user);
-      } else {
-        console.log("Response not successful:", response.data.message);
-        setUserData(null);
-      }
+      if (response.data.success) setUserData(response.data.user);
+      else setUserData(null);
     } catch (error) {
-      console.error("Failed to fetch user data:", error);
       setUserData(null);
     }
   };
 
-  const fetchVideoListData = async () => {
+  const refreshVideos = async () => {
     try {
-      const response = await axios.get(`${backendURl}/api/user/videos`);
-      if (response.data.success) {
-        setVideo(response.data.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch videos:", error);
+      const response = await axios.get(`${backendURl}/api/user/videos`, {
+        timeout: 15000,
+      });
+      if (response.data.success) setVideo(response.data.data || []);
+    } catch (_err) {
+      setVideo([]);
     }
   };
-
-  const refreshVideos = () => {
-    fetchVideoListData();
-  };
-
-  // Fetch videos immediately on app load (does not require auth)
-  useEffect(() => {
-    fetchVideoListData();
-  }, []);
 
   useEffect(() => {
     fetchUserData();

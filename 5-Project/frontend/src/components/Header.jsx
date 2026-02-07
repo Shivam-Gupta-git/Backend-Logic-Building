@@ -212,7 +212,7 @@ function Header({ isLoginPage }) {
     </>
   );
   return (
-    <div className="h-[60px] w-full  flex flex-row items-center justify-between border border-gray-100 sticky top-0 left-0">
+    <div className="h-[60px] w-full  flex flex-row items-center justify-between border border-gray-100 sticky top-0 left-0 bg-white z-20">
       {/* Bars and Logo */}
       <div className="h-full w-[15%]  flex items-center flex-row justify-around relative">
         <div className="h-full w-20  flex items-center justify-center">

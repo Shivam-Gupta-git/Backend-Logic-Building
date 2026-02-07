@@ -18,8 +18,8 @@ import { likeRouter } from "./routes/like.router.js";
 import { dashboard } from "./routes/dashboard.router.js";
 
 dotenv.config();
-// Keep backend aligned with frontend VITE_BACKEND_URL (http://localhost:3000)
-const PORT = process.env.PORT || 3000;
+// Use 3000 so frontend (http://localhost:3000) can reach this server
+const PORT = Number(process.env.PORT) || 3000;
 connectDB({
   path: "./.env",
 });
