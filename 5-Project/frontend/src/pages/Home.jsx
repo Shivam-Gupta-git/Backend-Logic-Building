@@ -2,9 +2,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { ChannelContext } from "../context/ChannelContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaPlay, FaEye, FaHeart } from "react-icons/fa";
+import { FaPlay, FaEye, FaClock, FaExclamationTriangle, FaRedo } from "react-icons/fa";
 import { API_BASE } from "../lib/api.js";
-
 
 function VideoThumbnail({ item }) {
   const rawThumb = item?.thumbnail ?? item?.thumb ?? "";
@@ -35,8 +34,25 @@ function VideoThumbnail({ item }) {
     );
   }
   return (
-    <div className="w-full h-full min-h-[140px] flex items-center justify-center bg-gray-800">
-      <FaPlay className="text-white text-4xl" />
+    <div className="w-full h-full min-h-[140px] flex items-center justify-center bg-zinc-800">
+      <FaPlay className="text-amber-400/60 text-3xl" />
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-xl overflow-hidden bg-zinc-800/60 animate-pulse">
+      <div className="aspect-video bg-zinc-700/80" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-zinc-700/80 rounded w-3/4" />
+        <div className="h-3 bg-zinc-700/60 rounded w-full" />
+        <div className="h-3 bg-zinc-700/60 rounded w-1/2" />
+        <div className="flex gap-4 mt-2">
+          <div className="h-3 bg-zinc-700/60 rounded w-16" />
+          <div className="h-3 bg-zinc-700/60 rounded w-12" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -72,9 +88,8 @@ function Home() {
           return;
         }
         setFetchError(
-          "Cannot connect to backend. Start the server: in the backend folder run 'npm run dev' or 'node app.js'. Server must run on http://localhost:3000"
+          "Cannot connect to backend. Run the server in the backend folder: node app.js (port 3000)"
         );
-        console.error("Failed to fetch videos:", error.message);
       } finally {
         setLoading(false);
       }
@@ -87,91 +102,109 @@ function Home() {
     navigate(`/video/${videoId}`);
   };
 
+  const publishedVideos = videos.filter((v) => v && v.isPublished !== false);
+
+  const formatDuration = (sec) => {
+    if (!sec || sec <= 0) return null;
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-zinc-950 ">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="h-8 w-48 bg-zinc-800/60 rounded-lg animate-pulse mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          Trending Videos
-        </h1>
+    <div className="min-h-screen ">
+      {/* Header */}
 
-        {videos && videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {videos
-              .filter((v) => v && v.isPublished !== false)
-              .map((item) => (
-                <div
-                  key={item._id}
-                  onClick={() => handleVideoClick(item._id)}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300 group"
-                >
-                  <div className="relative aspect-video bg-gray-900 overflow-hidden">
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {publishedVideos.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {publishedVideos.map((item) => (
+              <article
+                key={item._id}
+                onClick={() => handleVideoClick(item._id)}
+                className="group cursor-pointer"
+              >
+                <div className="relative rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-zinc-800/80 hover:ring-amber-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/5 hover:-translate-y-0.5">
+                  <div className="relative aspect-video bg-zinc-900 overflow-hidden">
                     <VideoThumbnail item={item} />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                      <FaPlay className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-14 h-14 rounded-full bg-amber-500/90 flex items-center justify-center shadow-lg">
+                        <FaPlay className="text-zinc-950 text-lg ml-1" />
+                      </div>
                     </div>
                     {item.duration > 0 && (
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                        {Math.floor(item.duration / 60)}:
-                        {(item.duration % 60).toString().padStart(2, "0")}
+                      <div className="absolute bottom-2 right-2 bg-zinc-950/90 text-zinc-300 text-xs font-medium px-2 py-1 rounded flex items-center gap-1">
+                        <FaClock className="text-[10px]" />
+                        {formatDuration(item.duration)}
                       </div>
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-white line-clamp-2 group-hover:text-amber-400 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {item.description}
+                    <p className="text-sm text-zinc-400 line-clamp-2 mt-1">
+                      {item.description || "No description"}
                     </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <FaEye className="text-gray-400" />
-                        <span>{item.views || 0} views</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaHeart className="text-gray-400" />
-                        <span>Likes</span>
-                      </div>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+                      <span className="flex items-center gap-1.5">
+                        <FaEye className="text-zinc-600" />
+                        {item.views || 0} views
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
+              </article>
+            ))}
           </div>
         ) : fetchError ? (
-          <div className="text-center py-20 bg-white rounded-lg border border-red-200 p-8">
-            <p className="text-red-600 font-medium mb-2">
-              Could not load videos
-            </p>
-            <p className="text-gray-600 text-sm mb-4 max-w-md mx-auto">
-              {fetchError}
-            </p>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+              <FaExclamationTriangle className="text-red-400 text-2xl" />
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">Connection failed</h2>
+            <p className="text-zinc-400 max-w-md mb-6">{fetchError}</p>
             <button
               onClick={() => {
                 setLoading(true);
                 setRetryCount((c) => c + 1);
               }}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold rounded-lg transition-colors"
             >
+              <FaRedo />
               Retry
             </button>
           </div>
         ) : (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No videos available</p>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div className="w-20 h-20 rounded-full bg-zinc-800/80 flex items-center justify-center mb-6">
+              <FaPlay className="text-zinc-500 text-3xl" />
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">No videos yet</h2>
+            <p className="text-zinc-400 mb-6">Be the first to upload and share</p>
             {token && (
               <button
                 onClick={() => navigate("/UploadVideos")}
-                className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold rounded-lg transition-colors"
               >
-                Upload Your First Video
+                Upload video
               </button>
             )}
           </div>
